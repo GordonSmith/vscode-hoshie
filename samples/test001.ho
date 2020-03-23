@@ -2,7 +2,7 @@
      - Should they only start with an upper case letter?
 */
 {} R = {string s1, number n1, boolean b1};
-R2 = {string s1, number n1, boolean b1};
+// R2 = {string s1, number n1, boolean b1};
 
 /*  Instance Declarations 
      - Should they only start with a lower case letter?
@@ -14,7 +14,7 @@ R2 = {string s1, number n1, boolean b1};
 // string s2 = "Hello and Welcome!";
 // s2 = "Hello and Welcome!";
 
-number n0 = 42;
+number _n0 = 42;
 number n1 = 0.2;
 number[] n2 = 42.2;
 number n3a = [1, 2, 3, 4]; 
@@ -26,6 +26,7 @@ boolean b2 = false;
 b3 = true;
 
 {string s1, number n1, boolean b1} r = {"aaa", 1, true};
+R r = {"aaa", 1, true};
 
 //  Datasets  ---
 {string s1, number n1, boolean b1}[] d1 = [{"aaa", 1, true}, {"bbb", 2, false}, {"ddd", 2, false}];

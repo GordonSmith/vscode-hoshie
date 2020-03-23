@@ -59,16 +59,15 @@ class HoshieParser extends CstParser {
         //#region Type Definitions  ---
         $.RULE("typeDefinition", () => {
             $.OR([
-                { ALT: () => $.SUBRULE($.rowType) },
+                { ALT: () => $.SUBRULE($.structureType) },
             ]);
         });
 
-        $.RULE("rowType", () => {
+        $.RULE("structureType", () => {
             $.CONSUME(lex.StructureType);
             $.CONSUME(lex.TypeID);
             $.CONSUME(lex.Assign);
             $.SUBRULE($.structure);
-            $.CONSUME(lex.SemiColon);
         });
 
         $.RULE("structure", () => {
@@ -93,7 +92,8 @@ class HoshieParser extends CstParser {
         $.RULE("declType", () => {
             $.OR([
                 { ALT: () => $.SUBRULE($.structure) },
-                { ALT: () => $.CONSUME(lex.PrimativeType) }
+                { ALT: () => $.CONSUME(lex.PrimativeType) },
+                { ALT: () => $.CONSUME(lex.TypeID) }
             ]);
         });
         //#endregion 

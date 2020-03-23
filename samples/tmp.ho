@@ -1,0 +1,20 @@
+// Single Line Comment
+
+/* 
+    Multi Line Comment
+*/
+
+{} R = {string lname, string fname, number age};
+{} R2 = {string lname, string fname, number age};
+R r = {"Smith", "John", 85};
+{string lname, string fname, number age} r = {"Smith", "John", 85};
+
+R[] d = [{"Smith", "John", 85}, {"Doe", "Jane", 80}];
+{string lname, string fname, number age}[] d = [{"Smith", "John", 85}, {"Doe", "Jane", 80}];
+
+string smithName = "Smith";
+string[] names = ["Smith", "Jones"];
+
+number age = 22;
+number[] ages = [22, 23, 24];
+
