@@ -1,0 +1,41 @@
+/*  Type Declarations 
+     - Should they only start with an upper case letter?
+*/
+{} R = {string s1, number n1, boolean b1};
+R2 = {string s1, number n1, boolean b1};
+
+/*  Instance Declarations 
+     - Should they only start with a lower case letter?
+     - do we allow inference?
+*/
+
+//  Primatives  ---
+// string s1 = "Hello and Welcome!";
+// string s2 = "Hello and Welcome!";
+// s2 = "Hello and Welcome!";
+
+number n0 = 42;
+number n1 = 0.2;
+number[] n2 = 42.2;
+number n3a = [1, 2, 3, 4]; 
+number[] n3b = [1, 2, 3, 4];
+n4 = 42;
+
+boolean b1 = true;
+boolean b2 = false;
+b3 = true;
+
+{string s1, number n1, boolean b1} r = {"aaa", 1, true};
+
+//  Datasets  ---
+{string s1, number n1, boolean b1}[] d1 = [{"aaa", 1, true}, {"bbb", 2, false}, {"ddd", 2, false}];
+R[] d2 = [{"ccc", 3, true}, {"ddd", 4, false}, {"eee", 4, false}];
+
+//  Primative Actions  ---
+// number n3 = n0 + n1;
+// number n4 = n2 - n1;
+// R[] d3 = d1 + d2;   //  equivilant to "concat"?
+
+//  Functions  ---
+// R[] d4 = concat(d1, d2);   //  equivilant to "concat"?
+// R[] d4 = d1.append(d2);    //  equivilant to "concat"?

@@ -1,0 +1,77 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "Hoshie",
+    "patterns": [
+        {
+            "include": "#entities"
+        },
+        {
+            "include": "#constants"
+        },
+        {
+            "include": "#strings"
+        },
+        {
+            "include": "#comments"
+        }
+    ],
+    "repository": {
+        "entities": {
+            "patterns": [
+                {
+                    "name": "entity.name.type",
+                    "match": "\\b(boolean|number|string)\\b"
+                },
+                {
+                    "name": "entity.name.type",
+                    "match": "\\{}"
+                }
+            ]
+        },
+        "keywords": {
+            "patterns": [
+                {
+                    "name": "keyword.control.hoshie",
+                    "match": "\\b(if|while|for|return)\\b"
+                }
+            ]
+        },
+        "constants": {
+            "patterns": [
+                {
+                    "name": "constant.numeric.hoshie",
+                    "match": "\\b(\\d+(\\.\\d+)?)\\b"
+                },
+                {
+                    "name": "constant.language.hoshie",
+                    "match": "\\b(true|false)\\b"
+                }
+            ]
+        },
+        "strings": {
+            "name": "string.quoted.double.hoshie",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.hoshie",
+                    "match": "\\\\."
+                }
+            ]
+        },
+        "comments": {
+            "patterns": [
+                {
+                    "name": "comment.block.hoshie",
+                    "begin": "/\\*",
+                    "end": "\\*/"
+                },
+                {
+                    "name": "comment.line.hoshie",
+                    "match": "(//).*$\\n?"
+                }
+            ]
+        }
+    },
+    "scopeName": "source.hoshie"
+}
