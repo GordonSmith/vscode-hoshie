@@ -26,7 +26,7 @@ export const ArrayType = createTok({ name: "ArrayType", pattern: /\[]/ });
 // export const DatasetType = createTok({ name: "DatasetType", group: "entity.name.type", pattern: /\[]/ });
 
 //  ID  ---
-export const TypeID = createTok({ name: "ID", pattern: /[A-Z]\w*/ });
+export const TypeID = createTok({ name: "TypeID", pattern: /[A-Z]\w*/ });
 export const ID = createTok({ name: "ID", pattern: /[_a-z]\w*/ });
 
 //  Special Chars  ---

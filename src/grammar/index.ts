@@ -26,8 +26,8 @@ export function parse(text: string) {
         });
         const ast: program = visitor.visit(cst);
 
-        syntaxVisitor.errors = [];
-        syntaxVisitor.visit(cst);
+        syntaxVisitor.clear();
+        syntaxVisitor.visit(cst, {});
         const syntaxErrors = syntaxVisitor.errors.map(error => {
             return {
                 range: loc2Range(error.token),
