@@ -129,7 +129,6 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             isStructure: true,
             iamge: "structure",
             type() { return true }
-
         };
     }
 
