@@ -12,7 +12,6 @@ export interface SyntaxError {
 
 type TypeFunc = () => "boolean" | "string" | "number" | "structure" | "typeDef";
 
-
 interface IDeclType {
     type: TypeFunc;
 }
@@ -24,7 +23,6 @@ interface IDeclaration extends IDeclType {
 
 
 interface IExpression {
-
     isArray: boolean;
     type: TypeFunc;
 }
@@ -32,12 +30,14 @@ interface IExpression {
 interface IStructure {
     fields: { [key: string]: IDeclaration };
 }
+
 interface IConstantExpresion extends IExpression { }
 
 export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWithDefaults() {
 
     errors: SyntaxError[] = [];
     globalVariables: { [key: string]: IDeclaration } = {};
+
     protected token(ctx) {
         if (ctx === undefined) return undefined;
         const node = Array.isArray(ctx) ? ctx[0] : ctx;
@@ -77,8 +77,6 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 token: assign
             });
         }
-
-
     }
 
     declaration(ctx, param): IDeclaration {
@@ -101,8 +99,6 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             isArray: !!ctx.ArrayType,
             type() {
                 return declType.type()
-
-
             }
         }
         scope[id.image] = retVal;
@@ -115,7 +111,6 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         const typeID = this.token(ctx.TypeID);
 
         return {
-
             type() {
                 if (structure || typeID) {
                     return "structure";  //...structure.type()}
@@ -147,8 +142,6 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 if (constExpression?.isNumber) return "number";
                 if (constExpression?.isBoolean) return "boolean";
                 return "string";
-
-
             }
         };
     }
