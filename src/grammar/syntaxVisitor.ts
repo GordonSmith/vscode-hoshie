@@ -71,7 +71,6 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         else if (assign && declaration && expression && (declaration.type() !== expression.type())) {
             this.errors.push({
                 error: {
-
                     message: `Value not of type ${declaration.type()} `
                 },
                 token: assign
