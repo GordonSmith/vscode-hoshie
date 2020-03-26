@@ -56,7 +56,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     }
 
     assignment(ctx, param) {
-        const declaration: IDeclaration = this.visit(ctx.declaration);
+        const declaration: IDeclaration = this.visit(ctx.declaration, param);
         const assign = this.token(ctx.Assign);
         const expression: IExpression = this.visit(ctx.expression, { scope: declaration });
         if (assign && declaration && expression && declaration.isArray !== expression.isArray) {
@@ -79,7 +79,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     }
 
     declaration(ctx, param): IDeclaration {
-        const declType: IDeclType = this.visit(ctx.declType);
+        const declType: IDeclType = this.visit(ctx.declType, param);
         const id = this.token(ctx.ID);
 
         const scope = param?.scope || this.globalVariables;
@@ -105,7 +105,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     }
 
     declType(ctx, param): IDeclType {
-        const structure = this.visit(ctx.structure);
+        const structure = this.visit(ctx.structure, param);
         const primativeType = this.token(ctx.PrimativeType);
         const typeID = this.token(ctx.TypeID);
 
@@ -122,7 +122,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
 
 
     structure(ctx, param): IStructure {
-        const declarations = ctx.declaration?.map(d => this.visit(d, { scope: {} }));
+        const declarations = ctx.declaration?.map(d => this.visit(d, param));
         return {
             ...declarations,
             isStructure: true,
