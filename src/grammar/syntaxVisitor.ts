@@ -86,7 +86,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         if (scope[id.image]) {
             this.errors.push({
                 error: {
-                    message: "Duplacate decleration"
+                    message: "Duplacate declaration"
                 },
                 token: id
             });
