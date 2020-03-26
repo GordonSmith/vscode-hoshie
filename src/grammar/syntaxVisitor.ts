@@ -126,7 +126,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         return {
             ...declarations,
             isStructure: true,
-            iamge: "structure",
+            image: "structure",
             type() { return true }
         };
     }
