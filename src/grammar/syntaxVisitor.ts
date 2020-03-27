@@ -10,6 +10,7 @@ export interface SyntaxError {
     token: TokenType;
 }
 
+type CodeGenFunc = () => string
 type TypeFunc = () => "boolean" | "string" | "number" | "structure" | "typeDef";
 
 interface IDeclType {
@@ -19,12 +20,14 @@ interface IDeclType {
 interface IDeclaration extends IDeclType {
     isArray: boolean;
     id: string;
+    codeGen: CodeGenFunc;
 }
 
 
 interface IExpression {
     isArray: boolean;
     type: TypeFunc;
+    codeGen: CodeGenFunc;
 }
 
 interface IStructure {
@@ -67,7 +70,6 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 token: assign
             });
         }
-
         else if (assign && declaration && expression && (declaration.type() !== expression.type())) {
             this.errors.push({
                 error: {
@@ -75,6 +77,12 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 },
                 token: assign
             });
+        }
+        const test = `${declaration.codeGen()} = ${expression.codeGen()}` // Line for debug
+        return {
+            codeGen() {
+                return `${declaration.codeGen()} = ${expression.codeGen()}`
+            }
         }
     }
 
@@ -98,6 +106,9 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             isArray: !!ctx.ArrayType,
             type() {
                 return declType.type()
+            },
+            codeGen() {
+                return `var ${id.image}: ${this.type().replace(/^\w/, c => c.toUpperCase())}${this.isArray ? "[]" : ""}`
             }
         }
         scope[id.image] = retVal;
@@ -127,7 +138,12 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             ...declarations,
             isStructure: true,
             image: "structure",
-            type() { return true }
+            type() {
+                return true
+            },
+            codeGen() {
+                return '';
+            }
         };
     }
 
@@ -140,6 +156,9 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 if (constExpression?.isNumber) return "number";
                 if (constExpression?.isBoolean) return "boolean";
                 return "string";
+            },
+            codeGen() {
+                return constExpression.codeGen();
             }
         };
     }
@@ -147,21 +166,48 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     constantExpression(ctx, param) {
         const constant = this.visit(ctx.constant, param);
         const constantArray = this.visit(ctx.constantArray, param);
+        var token = this.token(constant || constantArray);
         return {
             ...constant,
-            isArray: !!ctx.constantArray
+            isArray: !!ctx.constantArray,
+            codeGen() {
+                return token.codeGen();
+            }
         };
     }
 
     constant(ctx, param) {
+        const isRow = !!ctx.row
+        const isNumber = !!ctx.Number
+        const isBoolean = !!ctx.Boolean
+        const isString = !!ctx.String
+
+        const image = isRow ? "Row support WIP" : this.token(ctx.Number || ctx.Boolean || ctx.String).image;
+
         return {
-            isRow: !!ctx.row,
-            isNumber: !!ctx.Number,
-            isBoolean: !!ctx.Boolean,
-            isString: !!ctx.String
+            isRow,
+            isNumber,
+            isBoolean,
+            isString,
+            codeGen() {
+                return `${image}`
+            }
         };
     }
+
     constantArray(ctx, param) {
-        return true;
+        const constants = ctx.constant?.map(c => this.visit(c, param));
+
+        return {
+            isArray: true,
+            codeGen() {
+                var codeStr = '[';
+                for (let i = 0; i < constants.length - 1; i++) {
+                    codeStr += constants[i].codeGen() + ","
+                }
+                codeStr += constants[constants.length - 1].codeGen() + "]"
+                return codeStr
+            }
+        };
     }
 }
