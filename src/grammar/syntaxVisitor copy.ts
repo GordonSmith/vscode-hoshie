@@ -3,8 +3,6 @@ import { Range, DebugAdapterExecutable } from "vscode";
 import { hoshieParser } from "./parser";
 import { loc2Range } from "./util";
 import { isNumber, isBoolean, isString } from "./util";
-import { isArray } from "util";
-import { type } from "os";
 
 
 export interface SyntaxError {
@@ -56,7 +54,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
 
     program(ctx, param) {
         const programGlobalVariables: { [key: string]: IDeclaration } = {};
-        //const xStatments = this.visit(ctx.statement);
+        const xStatments = ctx.statement.next();
         const statements = ctx.statement?.map((s => this.visit(s, { scope: programGlobalVariables })));
 
 
@@ -72,26 +70,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     }
 
     structureType(ctx, param) {
-        const typeID = this.token(ctx.TypeID);
-        const assign = this.token(ctx.assign);
         const structure = this.visit(ctx.structure, param)
-        if (param.scope[typeID.image]) {
-            this.errors.push({
-                error: {
-                    message: "Duplacate decliration"
-                },
-                token: typeID
-            });
-        }
-        const retVal = {
-            //...declType,
-            typeID,// short hand for id:id,
-            isArray: !!ctx.ArrayType,
-            type() {
-                return structure.type()
-            }
-        }
-        param.scope[typeID.image] = retVal
     }
 
     clear() {
@@ -103,20 +82,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         const declaration: IDeclaration = this.visit(ctx.declaration, param);
         const assign = this.token(ctx.Assign);
         const expression: IExpression = this.visit(ctx.expression, param);
-        const a = declaration.type();
-        const b = expression.type();
-        if (Array.isArray(a) && Array.isArray(b)) {
-            if (!this.arrayCheck(a, b)) {
-                this.errors.push({
-                    error: {
-                        message: "structure dose not match assined value "
-                    },
-                    token: assign
-                })
-            }
-        }
-
-        else if (assign && declaration && expression && declaration.isArray !== expression.isArray) {
+        if (assign && declaration && expression && declaration.isArray !== expression.isArray) {
             this.errors.push({
                 error: {
                     message: "Mismatched Array []"
@@ -124,8 +90,15 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 token: assign
             });
         }
-
-        else if (assign && declaration && expression && (declaration.type() !== expression.type())) {
+        /*
+                function checkEq(dec, exp) {
+                    if (dec == exp) {
+                        return true
+                    }
+                    return false
+                }
+        */
+        else if (assign && declaration && expression && (declaration.type() == expression.type())) {
             this.errors.push({
                 error: {
 
@@ -134,30 +107,9 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 token: assign
             });
         }
+
+
     }
-
-    arrayCheck(LArray, RArray) {
-        //const retVal = { isSame: true, errorMessage: "" }
-        if (LArray.length !== RArray.length) {
-            //retVal.isSame = false;
-            //retVal.errorMessage = `"Too ${LArray.length() > RArray.length() ? "little" : "many"} right hand"`
-            return false
-        }
-
-        for (let index = 0; index < LArray.length; index++) {
-            if (LArray[index] !== RArray[index]) {
-                if (Array.isArray(LArray[index]) && Array.isArray(RArray[index])) {
-                    return this.arrayCheck(LArray[index], RArray[index])
-                } else {
-                    return false
-                }
-            }
-
-        }
-        return true
-    }
-
-
 
     declaration(ctx, param): IDeclaration {
         const declType: IDeclType = this.visit(ctx.declType, param);
@@ -179,6 +131,8 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             isArray: !!ctx.ArrayType,
             type() {
                 return declType.type()
+
+
             }
         }
         scope[id.image] = retVal;
@@ -191,16 +145,15 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         const typeID = this.token(ctx.TypeID);
 
         return {
-            //...structure,
+
             type() {
                 if (typeID) {
-                    const a = param.scope[typeID.image].type()
-                    return a;
+                    return { ...param.scope[typeID] };
                 }
                 else if (structure) {
                     //return "structure";  //...structure.type()}
-
-                    return structure.type()
+                    const a = structure.type();
+                    return a
                 }
                 return primativeType?.image;
             }
@@ -217,7 +170,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             ...declarations,
             isStructure: true,
             iamge: "structure",
-            type() { return declarations?.map(d => d.type()) }
+            type() { return declarations.map(d => d.type()) }
 
         };
     }
@@ -225,9 +178,16 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     expression(ctx, param): IExpression {
         const constExpression = this.visit(ctx.constantExpression, param);
         return {
-            isArray: !!constExpression.isArray,
+            isArray: constExpression.isArray,
             type() {
                 return constExpression.type();
+                /*
+                if (constExpression?.isRow) return "structure";
+                if (constExpression?.isNumber) return "number";
+                if (constExpression?.isBoolean) return "boolean";
+                return "string";*/
+
+
             }
         };
     }
@@ -238,10 +198,9 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
 
         return {
             ...constant,
-            ...constantArray,
+            isArray: !!ctx.constantArray,
             type() {
-                return !!constant ? constant.type() : constantArray.type();
-                //else return constantArray.type()
+                if (constant) { return constant.type() } //else return constantArray.type()
             }
         };
     }
@@ -271,18 +230,11 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         return {
             isRow: true,
             type() {
-                return constantsExpresions?.map(c => c.type())
+                return constantsExpresions
             }
         };
     }
-
     constantArray(ctx, param) {
-        const constants = ctx.constant?.map(c => this.visit(c))
-        return {
-            isArray: true,
-            type() {
-                return constants?.map(c => c.type())
-            }
-        }
+        return true;
     }
 }

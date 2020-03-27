@@ -131,7 +131,7 @@ class HoshieParser extends CstParser {
             $.MANY_SEP({
                 SEP: lex.Comma,
                 DEF: () => {
-                    $.SUBRULE($.constant);
+                    $.SUBRULE($.constantExpression);// changed constant to constantExpression
                 }
             });
             $.CONSUME(lex.RCurley);
