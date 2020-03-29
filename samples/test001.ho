@@ -1,4 +1,4 @@
-string xx = 23; 
+string xx = "23"; 
 { string s1, number n1, boolean b1} r = {"aaa", 2, true};
 {} R = {string t1, number n1, boolean b1};
 R r = {"aaa", "1", true};

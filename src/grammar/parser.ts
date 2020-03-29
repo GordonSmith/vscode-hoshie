@@ -112,6 +112,13 @@ class HoshieParser extends CstParser {
             $.OR([
                 { ALT: () => $.SUBRULE($.array) },
                 { ALT: () => $.SUBRULE($.row) },
+                { ALT: () => $.SUBRULE($.primativeTypeInstance) },
+            ]);
+        });
+
+
+        $.RULE("primativeTypeInstance", () => {
+            $.OR([
                 { ALT: () => $.CONSUME(lex.StringInstance) },
                 { ALT: () => $.CONSUME(lex.NumberInstance) },
                 { ALT: () => $.CONSUME(lex.BooleanInstance) }

@@ -36,7 +36,7 @@ export function parse(text: string) {
                 };
             });
         } catch (e) {
-            //debugger;
+            debugger;
         }
         return {
             type: "parse",

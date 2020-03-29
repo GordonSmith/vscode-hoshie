@@ -20,7 +20,7 @@ export const StringInstance = createTok({ name: "StringInstance", pattern: /("([
 export const NumberInstance = createTok({ name: "NumberInstance", pattern: /\b(\d+(\.\d+)?)\b/ });
 
 //  Types ---
-export const PrimativeType = createTok({ name: "PrimativeType", pattern: /\b(boolean|string|number)\b/ });
+//export const PrimativeType = createTok({ name: "PrimativeType", pattern: /\b(boolean|string|number)\b/ });
 export const Boolean = createTok({ name: "Boolean", pattern: /\bboolean\b/ });
 export const String = createTok({ name: "String", pattern: /\bstring\b/ });
 export const Number = createTok({ name: "Number", pattern: /\bnumber\b/ });

@@ -6,6 +6,7 @@ import { isNumber, isBoolean, isString } from "./util";
 import { isArray } from "util";
 import { type } from "os";
 import { BooleanInstance } from "./lexer";
+import { IpcNetConnectOpts } from "net";
 
 
 export interface SyntaxError {
@@ -20,6 +21,10 @@ type TypeOfFunc = () => "primativeType" | "boolean" | "string" | "row" | "array"
 interface IPrimativeType {
     type: TypeFunc;
     typeOf: TypeOfFunc;
+}
+
+interface IPrimativeTypeInstance extends IPrimativeType {
+
 }
 interface IConstant {
     type: TypeFunc;
@@ -80,11 +85,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
 
     program(ctx, param) {
         const programGlobalVariables: { [key: string]: IDeclaration } = {};
-
-        //const xStatments = this.visit(ctx.statement);
         const statements = ctx.statement?.map((s => this.visit(s, { scope: programGlobalVariables })));
-
-
     }
 
     statement(ctx, param) {
@@ -103,12 +104,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         const structure = this.visit(ctx.structure, param)
 
         const retVal = {
-            //...declType,
-            typeID,// short hand for id:id,
-            isArray: !!ctx.ArrayType,
-            type() {
-                return structure.type()
-            }
+            ...structure,
         }
         param.scope[typeID2.image] = retVal
 
@@ -123,7 +119,8 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         const declaration: IDeclaration = this.visit(ctx.declaration, param);
         const assign = this.token(ctx.Assign);
         const expression: IExpression = this.visit(ctx.expression, param);
-
+        const a = declaration.typeOf();
+        const b = expression.typeOf();
         if (declaration.type() === "structure" && expression.type() === "row") {
             if (!this.arrayCheck(declaration, expression)) {
                 this.errors.push({
@@ -224,15 +221,6 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         if (!!!typeID) {
             return undefined
         }
-        if (param.scope[typeID.image]) {
-            this.errors.push({
-                error: {
-                    message: "Duplacate decliration"
-                },
-                token: typeID
-            });
-        }
-
         return {
             type() {
                 return param.scope[typeID.image].type();
@@ -246,13 +234,17 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         const Boolean = this.token(ctx.Boolean)
         const Number = this.token(ctx.Number)
         const String = this.token(ctx.String)
-        const retVal = "string"
+        let bool = true
+        let retVal
         if (Boolean) {
-            const retVal = "boolean"
+            retVal = "boolean"
         } else if (Number) {
-            const retVal = "number"
+            retVal = "number"
         } else if (String) {
-            const retVal = "string"
+            retVal = "string"
+        } else {
+            bool = false
+            retVal = "boolean"
         }
         return {
             type() {
@@ -263,6 +255,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             }
         }
     }
+
 
     structure(ctx, param): IStructure {
 
@@ -279,43 +272,47 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     }
 
     expression(ctx, param): IExpression {
-        const constant = this.visit(ctx.constant, param);
+        const constant: IConstant = this.visit(ctx.constant, param);
         return {
             ...constant
         };
     }
 
     constant(ctx, param): IConstant {
-        const row = this.visit(ctx.row, param);
-        const array = this.visit(ctx.array, param);
-        const ret = undefined;
-        const retVal = {};
-        if (ctx.NumberInstance) {
-            const ret = "number"
-        } else if (ctx.BooleanInstance) {
-            const ret = "boolean"
-        } else if (ctx.StringInstance) {
-            const ret = "string"
-        } else {
-            const ret = undefined
-        }
-
-        if (ret) {
-            const retVal = {
-                type() {
-                    return ret
-                },
-                typeOf() {
-                    return ret
-                }
-            }
-        }
+        const row: IRow = this.visit(ctx.row, param);
+        const array: IArray = this.visit(ctx.array, param);
+        const primativeTypeInstance: IPrimativeTypeInstance = this.visit(ctx.primativeTypeInstance, param);
 
         return {
             ...row,
             ...array,
-            ...retVal
+            ...primativeTypeInstance
         };
+    }
+
+    primativeTypeInstance(ctx, param): IPrimativeTypeInstance {
+        const BooleanInstance = this.token(ctx.BooleanInstance)
+        const NumberInstance = this.token(ctx.NumberInstance)
+        const StringInstance = this.token(ctx.StringInstance)
+        let retVal
+        if (BooleanInstance) {
+            retVal = "boolean"
+        } else if (NumberInstance) {
+            retVal = "number"
+        } else if (StringInstance) {
+            retVal = "string"
+        } else {
+            retVal = "boolean"
+        }
+        return {
+            typeOf() {
+                return "primativeType"
+            },
+            type() {
+                return retVal
+            }
+        }
+
     }
 
     row(ctx, param): IRow {
@@ -330,8 +327,6 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
 
         };
     }
-
-
 
     array(ctx, param): IArray {
         const LSquare = this.token(ctx.LSquare);
