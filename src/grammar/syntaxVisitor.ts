@@ -22,7 +22,7 @@ interface IPrimativeType {
 }
 
 interface IPrimativeTypeInstance extends IPrimativeType {
-
+    codeGen: CodeGenFunc;
 }
 interface IConstant {
     type: TypeFunc;
@@ -130,14 +130,13 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             if (!this.arrayCheck(declaration, expression)) {
                 this.errors.push({
                     error: {
-                        message: "structure dose not match assined value "
+                        message: "structure does not match assigned value "
                     },
                     token: assign
                 })
             }
         }
-
-        else if (assign && declaration && expression && declaration.typeOf() !== expression.typeOf()) {
+        else if (assign && declaration && expression && (declaration.typeOf() !== expression.typeOf() || (declaration.isArray == true && expression.typeOf() !== "array"))) {
             this.errors.push({
                 error: {
                     message: "Mismatched Array []"
@@ -188,7 +187,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         if (!id) {
             this.errors.push({
                 error: {
-                    message: "No ID for declration"
+                    message: "No ID for declaration"
                 },
                 token: declType
             })
@@ -209,7 +208,13 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             id,// short hand for id:id,
             isArray: !!ctx.ArrayType,
             codeGen() {
-                return `var ${id.image}: ${this.type().replace(/^\w/, c => c.toUpperCase())}${this.isArray ? "[]" : ""}`
+                const TypeAsString = this.typeOf()
+                if (TypeAsString === "primativeType") {
+                    return `var ${id.image}: ${this.type().replace(/^\w/, c => c.toUpperCase())}${this.isArray ? "[]" : ""}`
+                }
+                else {
+                    return `var ${id.image}`
+                }
             }
         }
         scope[id.image] = retVal;
@@ -314,6 +319,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         const BooleanInstance = this.token(ctx.BooleanInstance)
         const NumberInstance = this.token(ctx.NumberInstance)
         const StringInstance = this.token(ctx.StringInstance)
+        const TypeAsString = (BooleanInstance || NumberInstance || StringInstance).image
         let retVal
         if (BooleanInstance) {
             retVal = "boolean"
@@ -329,7 +335,10 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 return "primativeType"
             },
             type() {
-                return (BooleanInstance || NumberInstance || StringInstance).image
+                return TypeAsString
+            },
+            codeGen() {
+                return TypeAsString
             }
         }
 
@@ -339,7 +348,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         const expresions = ctx.expression?.map((e: CstNode | CstNode[]) => this.visit(e, param))
         return {
             typeOf() {
-                return "row"
+                return "structure" // Rename from row to structure
             },
             type() {
                 return expresions?.map((e: IExpression) => e.type())
@@ -347,7 +356,6 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             codeGen() {
                 return "row code"
             }
-
         };
     }
 
@@ -386,16 +394,16 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         if (array.length == 0) {
             return { result: false }
         }
-        var pervious = array[0]
+        var previous = array[0]
         array.forEach(element => {
-            if (pervious != element) {
+            if (previous != element) {
                 return { result: false }
             }
-            pervious = element;
+            previous = element;
         });
         return {
             result: true,
-            lastElType: pervious
+            lastElType: previous
         }
 
     }
