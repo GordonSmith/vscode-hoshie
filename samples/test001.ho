@@ -1,7 +1,9 @@
+{string s1, number n1, boolean b1} r = {"aaa", 2, true};
+{} R = {string t1, number n1, boolean b1};
+R r = {"aaa", "1", true};
 number _n0 = 42;
 
-{} R = {string s1, number n1, boolean b1, string s1};
-R r = {"aaa", 1, true};
+
 /*  Type Declarations 
      - Should they only start with an upper case letter?
 */
@@ -16,9 +18,10 @@ R r = {"aaa", 1, true};
 // string s1 = "Hello and Welcome!";
 // string s2 = "Hello and Welcome!";
 // s2 = "Hello and Welcome!";
-
+number weewoo = "ni";
 number n9 = 11 ;
 number n1 = 0.2;
+number n1 = 2;
 number[] n2 = 42.2;
 number n3a = [1, 2, 3, 4]; 
 number[] n3b = [1, 2, 3, 4];
@@ -30,7 +33,7 @@ boolean b1 = true;
 boolean b2 = false;
 b3 = true;
 
-{string s1, number n1, boolean b1} r = {"aaa", 1, true};
+{string s1, number n1, boolean b1, string s1} r = {"aaa", 1, true};
 
 
 //  Datasets  ---
