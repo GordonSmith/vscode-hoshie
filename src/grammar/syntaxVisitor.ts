@@ -5,6 +5,7 @@ import { loc2Range } from "./util";
 import { isNumber, isBoolean, isString } from "./util";
 import { isArray } from "util";
 import { type } from "os";
+import { BooleanInstance } from "./lexer";
 
 
 export interface SyntaxError {
@@ -12,29 +13,52 @@ export interface SyntaxError {
     token: TokenType;
 }
 
-type TypeFunc = () => "boolean" | "string" | "number" | "structure" | "typeDef";
+type TypeFunc = () => "boolean" | "string" | "row" | "number" | "structure" | "typeDef";
+type TypeOfFunc = () => "primativeType" | "boolean" | "string" | "row" | "array" | "number" | "structure" | "typeDef";
 
 
-interface IDeclType {
+interface IPrimativeType {
     type: TypeFunc;
+    typeOf: TypeOfFunc;
+}
+interface IConstant {
+    type: TypeFunc;
+    typeOf: TypeOfFunc;
+}
+interface IExpression extends IConstant {
 }
 
+interface IRow extends IConstant {
+
+}
+interface IArray extends IConstant { }
+
+interface IAssign {
+    type: TypeFunc;
+    typeOf: TypeFunc;
+}
+
+interface IArrayEqual {
+    (input: Array<any>): string
+}
+interface IDeclType {
+    name;
+    type: TypeFunc;
+    typeOf: TypeOfFunc;
+}
 interface IDeclaration extends IDeclType {
+
     isArray: boolean;
     id: string;
 }
-
-
-interface IExpression {
-
-    isArray: boolean;
-    type: TypeFunc;
-}
-
 interface IStructure {
     fields: { [key: string]: IDeclaration };
+    type();
+    typeOf();
 }
 interface IConstantExpresion extends IExpression { }
+
+
 
 export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWithDefaults() {
 
@@ -56,6 +80,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
 
     program(ctx, param) {
         const programGlobalVariables: { [key: string]: IDeclaration } = {};
+
         //const xStatments = this.visit(ctx.statement);
         const statements = ctx.statement?.map((s => this.visit(s, { scope: programGlobalVariables })));
 
@@ -72,17 +97,11 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     }
 
     structureType(ctx, param) {
-        const typeID = this.token(ctx.TypeID);
+        const typeID = this.typeIDLex(ctx.TypeID, param);
+        const typeID2 = this.token(ctx.TypeID);
         const assign = this.token(ctx.assign);
         const structure = this.visit(ctx.structure, param)
-        if (param.scope[typeID.image]) {
-            this.errors.push({
-                error: {
-                    message: "Duplacate decliration"
-                },
-                token: typeID
-            });
-        }
+
         const retVal = {
             //...declType,
             typeID,// short hand for id:id,
@@ -91,7 +110,8 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 return structure.type()
             }
         }
-        param.scope[typeID.image] = retVal
+        param.scope[typeID2.image] = retVal
+
     }
 
     clear() {
@@ -103,10 +123,9 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         const declaration: IDeclaration = this.visit(ctx.declaration, param);
         const assign = this.token(ctx.Assign);
         const expression: IExpression = this.visit(ctx.expression, param);
-        const a = declaration.type();
-        const b = expression.type();
-        if (Array.isArray(a) && Array.isArray(b)) {
-            if (!this.arrayCheck(a, b)) {
+
+        if (declaration.type() === "structure" && expression.type() === "row") {
+            if (!this.arrayCheck(declaration, expression)) {
                 this.errors.push({
                     error: {
                         message: "structure dose not match assined value "
@@ -116,7 +135,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             }
         }
 
-        else if (assign && declaration && expression && declaration.isArray !== expression.isArray) {
+        else if (assign && declaration && expression && declaration.typeOf() !== expression.typeOf()) {
             this.errors.push({
                 error: {
                     message: "Mismatched Array []"
@@ -137,13 +156,10 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     }
 
     arrayCheck(LArray, RArray) {
-        //const retVal = { isSame: true, errorMessage: "" }
+
         if (LArray.length !== RArray.length) {
-            //retVal.isSame = false;
-            //retVal.errorMessage = `"Too ${LArray.length() > RArray.length() ? "little" : "many"} right hand"`
             return false
         }
-
         for (let index = 0; index < LArray.length; index++) {
             if (LArray[index] !== RArray[index]) {
                 if (Array.isArray(LArray[index]) && Array.isArray(RArray[index])) {
@@ -162,7 +178,14 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     declaration(ctx, param): IDeclaration {
         const declType: IDeclType = this.visit(ctx.declType, param);
         const id = this.token(ctx.ID);
-
+        if (!id) {
+            this.errors.push({
+                error: {
+                    message: "No ID for declration"
+                },
+                token: declType
+            })
+        }
         const scope = param?.scope;
         if (scope[id.image]) {
             this.errors.push({
@@ -174,12 +197,11 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         }
 
         const retVal = {
-            //...declType,
+            ...declType,
             id,// short hand for id:id,
             isArray: !!ctx.ArrayType,
-            type() {
-                return declType.type()
-            }
+
+
         }
         scope[id.image] = retVal;
         return retVal;
@@ -187,102 +209,173 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
 
     declType(ctx, param): IDeclType {
         const structure = this.visit(ctx.structure, param);
-        const primativeType = this.token(ctx.PrimativeType);
-        const typeID = this.token(ctx.TypeID);
-
+        const primativeType = this.visit(ctx.primativeType, param);
+        const typeIdR = this.typeIDLex(ctx, param)
         return {
-            //...structure,
-            type() {
-                if (typeID) {
-                    const a = param.scope[typeID.image].type()
-                    return a;
-                }
-                else if (structure) {
-                    //return "structure";  //...structure.type()}
-
-                    return structure.type()
-                }
-                return primativeType?.image;
-            }
-
+            ...structure,
+            ...primativeType,
+            ...typeIdR
         };
     }
 
+    typeIDLex(ctx, param) {
+        const typeID = this.token(ctx.TypeID)
+
+        if (!!!typeID) {
+            return undefined
+        }
+        if (param.scope[typeID.image]) {
+            this.errors.push({
+                error: {
+                    message: "Duplacate decliration"
+                },
+                token: typeID
+            });
+        }
+
+        return {
+            type() {
+                return param.scope[typeID.image].type();
+            }, typeOf() {
+                return param.scope[typeID.image].typeOf();
+            }
+        }
+    }
+
+    primativeType(ctx, param): IPrimativeType {
+        const Boolean = this.token(ctx.Boolean)
+        const Number = this.token(ctx.Number)
+        const String = this.token(ctx.String)
+        const retVal = "string"
+        if (Boolean) {
+            const retVal = "boolean"
+        } else if (Number) {
+            const retVal = "number"
+        } else if (String) {
+            const retVal = "string"
+        }
+        return {
+            type() {
+                return retVal
+            },
+            typeOf() {
+                return "primativeType"
+            }
+        }
+    }
 
     structure(ctx, param): IStructure {
 
         const newParam: { [key: string]: IDeclaration } = {};
-        const declarations = ctx.declaration?.map(d => this.visit(d, { scope: newParam }));
+        const declarations = ctx.declaration?.map((d: CstNode | CstNode[]) => this.visit(d, { scope: newParam }));
         return {
             ...declarations,
-            isStructure: true,
-            iamge: "structure",
-            type() { return declarations?.map(d => d.type()) }
+            typeOf() { return "structure" },
+            type() {
+                return declarations?.map(d => d.type())
+            }
 
         };
     }
 
     expression(ctx, param): IExpression {
-        const constExpression = this.visit(ctx.constantExpression, param);
-        return {
-            isArray: !!constExpression.isArray,
-            type() {
-                return constExpression.type();
-            }
-        };
-    }
-
-    constantExpression(ctx, param) {
         const constant = this.visit(ctx.constant, param);
-        const constantArray = this.visit(ctx.constantArray, param);
-
         return {
-            ...constant,
-            ...constantArray,
-            type() {
-                return !!constant ? constant.type() : constantArray.type();
-                //else return constantArray.type()
-            }
+            ...constant
         };
     }
 
-    constant(ctx, param) {
+    constant(ctx, param): IConstant {
         const row = this.visit(ctx.row, param);
-        return {
-            ...row,
-            isNumber: !!ctx.Number,
-            isBoolean: !!ctx.Boolean,
-            isString: !!ctx.String,
-            type() {
-                if (ctx.Number) {
-                    return "number"
-                } else if (ctx.Boolean) {
-                    return "boolean"
-                } else if (ctx.String) {
-                    return "string"
+        const array = this.visit(ctx.array, param);
+        const ret = undefined;
+        const retVal = {};
+        if (ctx.NumberInstance) {
+            const ret = "number"
+        } else if (ctx.BooleanInstance) {
+            const ret = "boolean"
+        } else if (ctx.StringInstance) {
+            const ret = "string"
+        } else {
+            const ret = undefined
+        }
+
+        if (ret) {
+            const retVal = {
+                type() {
+                    return ret
+                },
+                typeOf() {
+                    return ret
                 }
-                return row.type()
-            }
-        };
-    }
-
-    row(ctx, param) {
-        const constantsExpresions = ctx.constantExpression?.map(c => this.visit(c))
-        return {
-            isRow: true,
-            type() {
-                return constantsExpresions?.map(c => c.type())
-            }
-        };
-    }
-
-    constantArray(ctx, param) {
-        const constants = ctx.constant?.map(c => this.visit(c))
-        return {
-            isArray: true,
-            type() {
-                return constants?.map(c => c.type())
             }
         }
+
+        return {
+            ...row,
+            ...array,
+            ...retVal
+        };
+    }
+
+    row(ctx, param): IRow {
+        const expresions = ctx.expression?.map((e: CstNode | CstNode[]) => this.visit(e, param))
+        return {
+            typeOf() {
+                return "row"
+            },
+            type() {
+                return expresions?.map((e: IExpression) => e.type())
+            }
+
+        };
+    }
+
+
+
+    array(ctx, param): IArray {
+        const LSquare = this.token(ctx.LSquare);
+        const expressions = ctx.expression?.map((e: CstNode | CstNode[]) => this.visit(e, param));
+        const expressionTypes = expressions?.map((e: IExpression) => e.typeOf());
+        const result = this.allEqual(expressionTypes);
+
+        if (!result.result) {
+            this.errors.push({
+                error: {
+                    message: "Array Malformed"
+                },
+                token: LSquare
+            });
+        }
+
+        return {
+            typeOf() { return "array" },
+            type() {
+                return expressions?.map((e: IExpression) => e.type())
+
+
+
+            }
+        }
+    }
+
+
+
+    allEqual(array: Array<any>) {
+        if (array.length == 0) {
+            return { result: false }
+        }
+        var pervious = array[0]
+        array.forEach(element => {
+            if (pervious != element) {
+                return { result: false }
+            }
+            pervious = element;
+        });
+        return {
+            result: true,
+            lastElType: pervious
+        }
+
     }
 }

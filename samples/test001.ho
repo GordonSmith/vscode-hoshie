@@ -1,4 +1,5 @@
-{string s1, number n1, boolean b1} r = {"aaa", 2, true};
+string xx = 23; 
+{ string s1, number n1, boolean b1} r = {"aaa", 2, true};
 {} R = {string t1, number n1, boolean b1};
 R r = {"aaa", "1", true};
 number _n0 = 42;
@@ -33,7 +34,7 @@ boolean b1 = true;
 boolean b2 = false;
 b3 = true;
 
-{string s1, number n1, boolean b1, string s1} r = {"aaa", 1, true};
+{string s1, number n1, boolean b1, string s2} r = {"aaa", 1, true, "aa"};
 
 
 //  Datasets  ---
