@@ -25,15 +25,19 @@ export function parse(text: string) {
             };
         });
         const ast: program = visitor.visit(cst);
-
-        syntaxVisitor.clear();
-        syntaxVisitor.visit(cst, {});
-        const syntaxErrors = syntaxVisitor.errors.map(error => {
-            return {
-                range: loc2Range(error.token),
-                error: error.error
-            };
-        });
+        let syntaxErrors: any[] = [];
+        try {
+            syntaxVisitor.clear();
+            syntaxVisitor.visit(cst, {});
+            syntaxErrors = syntaxVisitor.errors.map(error => {
+                return {
+                    range: loc2Range(error.token),
+                    error: error.error
+                };
+            });
+        } catch (e) {
+            debugger;
+        }
         return {
             type: "parse",
             text,

@@ -1,10 +1,5 @@
-import { CstNode, IRecognitionException, TokenType, Lexer } from "chevrotain";
-import { Range, DebugAdapterExecutable } from "vscode";
+import { CstNode, TokenType } from "chevrotain";
 import { hoshieParser } from "./parser";
-import { loc2Range } from "./util";
-import { isNumber, isBoolean, isString } from "./util";
-import { isArray, isDeepStrictEqual } from "util";
-import { type } from "os";
 
 
 export interface SyntaxError {
@@ -13,35 +8,67 @@ export interface SyntaxError {
 }
 
 type CodeGenFunc = () => string
-type Types = "boolean" | "string" | "number" | "structure" | "array" | "typeDef";
+type Types = "boolean" | "string" | "number" | "row" | "structure" | "typeDef";
 type TypeFunc = () => Types;
+type TypeOfFunc = () => "primativeType" | "array" | Types;
 
 interface IVisited {
     visitedType: string;
 }
 
-interface IDeclType extends IVisited {
+interface IPrimativeType {
     type: TypeFunc;
-    details: IStructure | TokenType;
+    typeOf: TypeOfFunc;
 }
 
+interface IPrimativeTypeInstance extends IPrimativeType {
+
+}
+interface IConstant {
+    type: TypeFunc;
+    typeOf: TypeOfFunc;
+    codeGen: CodeGenFunc;
+}
+interface IExpression extends IConstant {
+    codeGen: CodeGenFunc;
+}
+
+interface IRow extends IConstant {
+    codeGen: CodeGenFunc;
+}
+interface IArray extends IConstant {
+    codeGen: CodeGenFunc;
+}
+
+interface IAssign {
+    type: TypeFunc;
+    typeOf: TypeFunc;
+}
+
+interface IArrayEqual {
+    (input: Array<any>): string
+}
+interface IDeclType {
+    name;
+    type: TypeFunc;
+    typeOf: TypeOfFunc;
+    codeGen: CodeGenFunc;
+}
 interface IDeclaration extends IDeclType {
+    codeGen: CodeGenFunc;
+
     isArray: boolean;
     id: string;
-    codeGen: CodeGenFunc;
 }
-
-interface IExpression extends IVisited {
-    isArray: boolean;
-    instanceOf: Types;
-    codeGen: CodeGenFunc;
-}
-
-interface IStructure extends IVisited {
+interface IStructure {
     fields: { [key: string]: IDeclaration };
+    type();
+    typeOf();
 }
 
 interface IConstantExpresion extends IExpression { }
+
+
 
 export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWithDefaults() {
 
@@ -64,10 +91,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
 
     program(ctx, param) {
         const programGlobalVariables: { [key: string]: IDeclaration } = {};
-        //const xStatments = this.visit(ctx.statement);
         const statements = ctx.statement?.map((s => this.visit(s, { scope: programGlobalVariables })));
-
-
     }
 
     statement(ctx, param) {
@@ -80,26 +104,15 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     }
 
     structureType(ctx, param) {
-        const typeID = this.token(ctx.TypeID);
+        const typeID = this.typeIDLex(ctx.TypeID, param);
+        const typeID2 = this.token(ctx.TypeID);
         const assign = this.token(ctx.assign);
         const structure = this.visit(ctx.structure, param)
-        if (param.scope[typeID.image]) {
-            this.errors.push({
-                error: {
-                    message: "Duplacate declaration"
-                },
-                token: typeID
-            });
-        }
         const retVal = {
-            //...declType,
-            typeID,// short hand for id:id,
-            isArray: !!ctx.ArrayType,
-            type() {
-                return structure.type()
-            }
+            ...structure,
         }
-        param.scope[typeID.image] = retVal
+        param.scope[typeID2.image] = retVal
+
     }
 
     clear() {
@@ -111,10 +124,10 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         const declaration: IDeclaration = this.visit(ctx.declaration, param);
         const assign = this.token(ctx.Assign);
         const expression: IExpression = this.visit(ctx.expression, param);
-        const a = declaration.type();
-        const b = expression.instanceOf;
-        if (Array.isArray(a) && Array.isArray(b)) {
-            if (!this.arrayCheck(a, b)) {
+        const a = declaration.typeOf();
+        const b = expression.typeOf();
+        if (declaration.type() === "structure" && expression.type() === "row") {
+            if (!this.arrayCheck(declaration, expression)) {
                 this.errors.push({
                     error: {
                         message: "structure dose not match assined value "
@@ -124,7 +137,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             }
         }
 
-        else if (assign && declaration && expression && declaration.isArray !== expression.isArray) {
+        else if (assign && declaration && expression && declaration.typeOf() !== expression.typeOf()) {
             this.errors.push({
                 error: {
                     message: "Mismatched Array []"
@@ -132,17 +145,15 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 token: assign
             });
         }
-        else if (assign && declaration && expression && (declaration.type() !== expression.instanceOf)) {
-            this.errors.push({
-                error: {
-                    message: `Value not of type ${declaration.type()} `
-                },
-                token: assign
-            });
-        }
-        else if (declaration.type() == "structure" && expression.instanceOf == "structure") {
+        // else if (assign && declaration && expression && (declaration.type() !== expression.instanceOf)) {
+        //     this.errors.push({
+        //         error: {
+        //             message: `Value not of type ${declaration.type()} `
+        //         },
+        //         token: assign
+        //     });
+        // }
 
-        }
         const test = `${declaration.codeGen()} = ${expression.codeGen()}` // Line for debug
         return {
             codeGen() {
@@ -152,13 +163,10 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     }
 
     arrayCheck(LArray, RArray) {
-        //const retVal = { isSame: true, errorMessage: "" }
+
         if (LArray.length !== RArray.length) {
-            //retVal.isSame = false;
-            //retVal.errorMessage = `"Too ${LArray.length() > RArray.length() ? "little" : "many"} right hand"`
             return false
         }
-
         for (let index = 0; index < LArray.length; index++) {
             if (LArray[index] !== RArray[index]) {
                 if (Array.isArray(LArray[index]) && Array.isArray(RArray[index])) {
@@ -177,7 +185,14 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     declaration(ctx, param): IDeclaration {
         const declType: IDeclType = this.visit(ctx.declType, param);
         const id = this.token(ctx.ID);
-
+        if (!id) {
+            this.errors.push({
+                error: {
+                    message: "No ID for declration"
+                },
+                token: declType
+            })
+        }
         const scope = param?.scope;
         if (scope[id.image]) {
             this.errors.push({
@@ -190,13 +205,9 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
 
         const retVal = {
             visitedType: "IDeclaration",
-            //...declType,
+            ...declType,
             id,// short hand for id:id,
             isArray: !!ctx.ArrayType,
-            details: declType.details,
-            type() {
-                return declType.type()
-            },
             codeGen() {
                 return `var ${id.image}: ${this.type().replace(/^\w/, c => c.toUpperCase())}${this.isArray ? "[]" : ""}`
             }
@@ -207,40 +218,67 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
 
     declType(ctx, param): IDeclType {
         const structure = this.visit(ctx.structure, param);
-        const primativeType = this.token(ctx.PrimativeType);
-        const typeID = this.token(ctx.TypeID);
-
+        const primativeType = this.visit(ctx.primativeType, param);
+        const typeIdR = this.typeIDLex(ctx, param)
         return {
-            visitedType: "IDeclType",
-            //...structure,
-            type() {
-                if (typeID) {
-                    const a = param.scope[typeID.image].type()
-                    return a;
-                }
-                else if (structure) {
-                    //return "structure";  //...structure.type()}
-
-                    return structure.type()
-                }
-                return primativeType?.image;
-            },
-            details: structure || primativeType
+            ...structure,
+            ...primativeType,
+            ...typeIdR
         };
+    }
+
+    typeIDLex(ctx, param) {
+        const typeID = this.token(ctx.TypeID)
+
+        if (!!!typeID) {
+            return undefined
+        }
+        return {
+            type() {
+                return param.scope[typeID.image].type();
+            }, typeOf() {
+                return param.scope[typeID.image].typeOf();
+            }
+        }
+    }
+
+    primativeType(ctx, param): IPrimativeType {
+        const Boolean = this.token(ctx.Boolean)
+        const Number = this.token(ctx.Number)
+        const String = this.token(ctx.String)
+        let bool = true
+        let retVal
+        if (Boolean) {
+            retVal = "boolean"
+        } else if (Number) {
+            retVal = "number"
+        } else if (String) {
+            retVal = "string"
+        } else {
+            bool = false
+            retVal = "boolean"
+        }
+        return {
+            type() {
+                return retVal
+            },
+            typeOf() {
+                return "primativeType"
+            }
+        }
     }
 
 
     structure(ctx, param): IStructure {
         const newParam: { [key: string]: IDeclaration } = {};
-        const declarations = ctx.declaration?.map(d => this.visit(d, { scope: newParam }));
+        const declarations = ctx.declaration?.map((d: CstNode | CstNode[]) => this.visit(d, { scope: newParam }));
         return {
             visitedType: "IStructure",
             ...declarations,
-            isStructure: true,
+            typeOf() { return "structure" },
             type() {
-                return "structure"
+                return declarations?.map(d => d.type())
             },
-            fields: declarations?.map(d => d.type()),
             codeGen() {
                 return '';
             }
@@ -248,96 +286,117 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     }
 
     expression(ctx, param): IExpression {
-        const constExpression = this.visit(ctx.constantExpression, param);
-        return {
-            visitedType: "IExpression",
-            isArray: !!constExpression.isArray,
-            codeGen() {
-                return constExpression.codeGen();
-            },
-            instanceOf: constExpression.instanceOf()
-        };
-    }
-
-    constantExpression(ctx, param) {
-        const constant = this.visit(ctx.constant, param);
-        const constantArray = this.visit(ctx.constantArray, param);
-
+        const constant: IConstant = this.visit(ctx.constant, param);
         return {
             ...constant,
-            ...constantArray,
-            instanceOf() {
-                return !!constant ? constant.instanceOf() : constantArray.instanceOF();
-                //else return constantArray.type()
-            },
             codeGen() {
-                return !!constant ? constant.codeGen() : constantArray.codeGen();
+                return constant.codeGen();
             }
         };
     }
 
-    constant(ctx, param) {
-        const row = this.visit(ctx.row, param);
-        const image = !!row ? "Row support WIP" : this.token(ctx.Number || ctx.Boolean || ctx.String).image;
+    constant(ctx, param): IConstant {
+        const row: IRow = this.visit(ctx.row, param);
+        const array: IArray = this.visit(ctx.array, param);
+        const primativeTypeInstance: IPrimativeTypeInstance = this.visit(ctx.primativeTypeInstance, param);
+
         return {
             ...row,
-            isNumber: !!ctx.Number,
-            isBoolean: !!ctx.Boolean,
-            isString: !!ctx.String,
-            instanceOf() {
-                if (ctx.Number) {
-                    return "number"
-                } else if (ctx.Boolean) {
-                    return "boolean"
-                } else if (ctx.String) {
-                    return "string"
-                }
-                return row.instanceOf()
-            },
+            ...array,
+            ...primativeTypeInstance,
             codeGen() {
-                return `${image}`
+                return (row || array || primativeTypeInstance).codeGen()
             }
         };
     }
 
-    row(ctx, param) {
-        const constantsExpresions = ctx.constantExpression?.map(c => this.visit(c))
+    primativeTypeInstance(ctx, param): IPrimativeTypeInstance {
+        const BooleanInstance = this.token(ctx.BooleanInstance)
+        const NumberInstance = this.token(ctx.NumberInstance)
+        const StringInstance = this.token(ctx.StringInstance)
+        let retVal
+        if (BooleanInstance) {
+            retVal = "boolean"
+        } else if (NumberInstance) {
+            retVal = "number"
+        } else if (StringInstance) {
+            retVal = "string"
+        } else {
+            retVal = "boolean"
+        }
         return {
-            isRow: true,
-            instanceOf() {
-                return constantsExpresions?.map(c => c.instanceOf())
+            typeOf() {
+                return "primativeType"
             },
-            // calculateDeclTypes(): IDeclType[] {
-            //     const retVal :IDeclType[] =[];
-            //     constantsExpresions?.forEach(c => {
-            //         retVal.push({
-            //             type:()=>c.type(),
-            //             details: c.details // || Primative TokenType
-            //         })
-            //     })
-            // return retVal
-            // },
-        };
-    }
-
-    constantArray(ctx, param) {
-        const constants = ctx.constant?.map(c => this.visit(c))
-        return {
-            isArray: true,
-            values: constants?.map(c => c.instanceOf()),
-            instanceOF() {
-                return "array"
-            },
-            codeGen() {
-                // var codeStr = '[';
-                // for (let i = 0; i < constants.length - 1; i++) {
-                //     codeStr += constants[i].codeGen() + ","
-                // }
-                // codeStr += constants[constants.length - 1].codeGen() + "]"
-                // return codeStr
-                const a = JSON.stringify(constants?.map(c => c.codeGen()));
-                return a// JSON.stringify(constants?.map(c => c.codeGen())); 
+            type() {
+                return (BooleanInstance || NumberInstance || StringInstance).image
             }
         }
+
+    }
+
+    row(ctx, param): IRow {
+        const expresions = ctx.expression?.map((e: CstNode | CstNode[]) => this.visit(e, param))
+        return {
+            typeOf() {
+                return "row"
+            },
+            type() {
+                return expresions?.map((e: IExpression) => e.type())
+            },
+            codeGen() {
+                return "row code"
+            }
+
+        };
+    }
+
+    array(ctx, param): IArray {
+        const LSquare = this.token(ctx.LSquare);
+        const expressions = ctx.expression?.map((e: CstNode | CstNode[]) => this.visit(e, param));
+        const expressionTypes = expressions?.map((e: IExpression) => e.typeOf());
+        const result = this.allEqual(expressionTypes);
+
+        if (!result.result) {
+            this.errors.push({
+                error: {
+                    message: "Array Malformed"
+                },
+                token: LSquare
+            });
+        }
+
+        return {
+            typeOf() {
+                return "array"
+            },
+            type() {
+                return expressions?.map((e: IExpression) => e.type())
+            },
+            codeGen() {
+                const a = JSON.stringify(expressions?.map(c => c.codeGen()));
+                return a; // Unsure if in correct place 
+            }
+        }
+    }
+
+
+
+    allEqual(array: Array<any>) {
+        if (array.length == 0) {
+            return { result: false }
+        }
+        var pervious = array[0]
+        array.forEach(element => {
+            if (pervious != element) {
+                return { result: false }
+            }
+            pervious = element;
+        });
+        return {
+            result: true,
+            lastElType: pervious
+        }
+
     }
 }
