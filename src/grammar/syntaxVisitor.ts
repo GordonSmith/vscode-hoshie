@@ -126,6 +126,10 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         const expression: IExpression = this.visit(ctx.expression, param);
         const a = declaration.typeOf();
         const b = expression.typeOf();
+        const a1 = declaration.type();
+        const b1 = expression.type();
+        var codeGenString;
+        var test;
         if (declaration.type() === "structure" && expression.type() === "row") {
             if (!this.arrayCheck(declaration, expression)) {
                 this.errors.push({
@@ -144,25 +148,39 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 token: assign
             });
         }
-        // else if (assign && declaration && expression && (declaration.type() !== expression.instanceOf)) {
-        //     this.errors.push({
-        //         error: {
-        //             message: `Value not of type ${declaration.type()} `
-        //         },
-        //         token: assign
-        //     });
-        // }
+        else if (assign && declaration && expression && (declaration.type() !== expression.type())) {
+            this.errors.push({
+                error: {
+                    message: `Value not of type ${declaration.type()} `
+                },
+                token: assign
+            });
+        }
+        else {
+            codeGenString = this.generateAssignmentCode(expression, declaration)
+            if (declaration.typeOf() == "structure") {
+                test = `${declaration.codeGen()} = {${codeGenString}}`
+            }
+            else {
+                test = `${declaration.codeGen()} = ${codeGenString}`
+            }
+            console.log(test);
+        }
 
-        const test = `${declaration.codeGen()} = ${expression.codeGen()}` // Line for debug
         return {
             codeGen() {
-                return `${declaration.codeGen()} = ${expression.codeGen()}`
+                if (declaration.typeOf() == "structure") {
+                    return `${declaration.codeGen()} = {${codeGenString}}`
+                }
+                else {
+                    return `${declaration.codeGen()} = ${codeGenString}`
+                }
             }
         }
     }
 
-    arrayCheck(LArray, RArray) {
 
+    arrayCheck(LArray, RArray) {
         if (LArray.length !== RArray.length) {
             return false
         }
@@ -174,7 +192,6 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                     return false
                 }
             }
-
         }
         return true
     }
@@ -210,10 +227,10 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             codeGen() {
                 const TypeAsString = this.typeOf()
                 if (TypeAsString === "primativeType") {
-                    return `var ${id.image}: ${this.type().replace(/^\w/, c => c.toUpperCase())}${this.isArray ? "[]" : ""}`
+                    return `const ${id.image}: ${this.type().replace(/^\w/, c => c.toUpperCase())}${this.isArray ? "[]" : ""}`
                 }
                 else {
-                    return `var ${id.image}`
+                    return `const ${id.image}`
                 }
             }
         }
@@ -335,7 +352,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 return "primativeType"
             },
             type() {
-                return TypeAsString
+                return retVal
             },
             codeGen() {
                 return TypeAsString
@@ -406,5 +423,28 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             lastElType: previous
         }
 
+    }
+
+    generateAssignmentCode(expression, declaration) {
+        var retVal;
+        if (declaration.typeOf() == "structure") {
+            const values = expression.type();
+            const declarations = declaration.type();
+            var attributesString = String();
+            for (let i = 0; i < values.length - 1; i++) {
+                let decType = declarations[i]
+                let value = values[i]
+                if (decType == "structure") {
+                    this.generateAssignmentCode(decType, value);
+                }
+                attributesString += `${declaration[i].id.image}: ${declarations[i].replace(/^\w/, c => c.toUpperCase())}: ${values[i]}, \n`
+            }
+            attributesString += `${declaration[values.length - 1].id.image}: ${declarations[values.length - 1].replace(/^\w/, c => c.toUpperCase())}: ${values[values.length - 1]}\n`
+            retVal = `${attributesString}`
+        }
+        else {
+            retVal = expression.codeGen()
+        }
+        return retVal
     }
 }
