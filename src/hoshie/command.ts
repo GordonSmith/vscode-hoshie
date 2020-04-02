@@ -6,7 +6,7 @@ export class Commands {
 
     private constructor(ctx: vscode.ExtensionContext) {
         this._ctx = ctx;
-        ctx.subscriptions.push(vscode.commands.registerCommand("hoshie.helloWorld", this.helloWorld));
+        ctx.subscriptions.push(vscode.commands.registerCommand("hoshie.helloHoshie", this.helloWorld));
     }
 
     static attach(ctx: vscode.ExtensionContext): Commands {
@@ -17,6 +17,6 @@ export class Commands {
     }
 
     helloWorld() {
-        vscode.window.showInformationMessage('Hello World!');
+        vscode.window.showInformationMessage('Woof!');
     }
 }

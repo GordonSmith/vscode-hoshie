@@ -35,18 +35,18 @@ export class DocumentSymbolProvider implements vscode.DocumentSymbolProvider {
 
         const parsed = parse(document.getText());
         if (parsed) {
-            parsed.ast.statements.filter(s => s.content).forEach(s => {
-                switch (s.content?.type) {
-                    case "assignment":
-                        const assign = s.content as assignment;
-                        addSymbol(assign.lhs?.id?.image, "assignment - " + (assign.errors.length ? "partial" : "full"), vscode.SymbolKind.Variable, s.range, assign.lhs?.range);
-                        break;
-                    case "declaration":
-                        const decl = s.content as declaration;
-                        addSymbol(decl.id?.image, "declaration - " + (decl.errors.length ? "partial" : "full"), vscode.SymbolKind.Variable, s.range, decl.id?.range);
-                        break;
-                }
-            });
+            // parsed.ast.statements.filter(s => s.content).forEach(s => {
+            //     switch (s.content?.type) {
+            //         case "assignment":
+            //             const assign = s.content as assignment;
+            //             addSymbol(assign.lhs?.id?.image, "assignment - " + (assign.errors.length ? "partial" : "full"), vscode.SymbolKind.Variable, s.range, assign.lhs?.range);
+            //             break;
+            //         case "declaration":
+            //             const decl = s.content as declaration;
+            //             addSymbol(decl.id?.image, "declaration - " + (decl.errors.length ? "partial" : "full"), vscode.SymbolKind.Variable, s.range, decl.id?.range);
+            //             break;
+            //     }
+            // });
             const parserErrors = parsed.errors.map(e => {
                 return new vscode.Diagnostic(e.range, e.error.message, vscode.DiagnosticSeverity.Error);
             });

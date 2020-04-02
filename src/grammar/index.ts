@@ -1,10 +1,8 @@
 import { allTokens, HoshieLexer } from "./lexer";
 import { hoshieParser } from "./parser";
 import { loc2Range } from "./util";
-import { HoshieVisitor, program } from "./visitor";
 import { SyntaxVisitor } from "./syntaxVisitor";
 
-const visitor = new HoshieVisitor(hoshieParser.getAllRules(), allTokens);
 const syntaxVisitor = new SyntaxVisitor(hoshieParser.getAllRules(), allTokens);
 
 export function parse(text: string) {
@@ -24,20 +22,24 @@ export function parse(text: string) {
                 error
             };
         });
-        const ast: program = visitor.visit(cst);
 
-        syntaxVisitor.errors = [];
-        syntaxVisitor.visit(cst);
-        const syntaxErrors = syntaxVisitor.errors.map(error => {
-            return {
-                range: loc2Range(error.token),
-                error: error.error
-            };
-        });
+        let syntaxErrors: any[] = [];
+        try {
+            syntaxVisitor.clear();
+            syntaxVisitor.visit(cst, {});
+            syntaxErrors = syntaxVisitor.errors.map(error => {
+                return {
+                    range: loc2Range(error.token),
+                    error: error.error
+                };
+            });
+        } catch (e) {
+            debugger;
+        }
+
         return {
             type: "parse",
             text,
-            ast,
             errors: [...lexErrors, ...parserErrors, ...syntaxErrors],
             cst,
             tokens: lexResult.tokens,

@@ -1,7 +1,13 @@
+string xx = "23"; 
+{ string s1, number n1, boolean b1} r = {"aaa", 2, true};
+{} R = {string t1, number n1, boolean b1};
+R r = {"aaa", "1", true};
+number _n0 = 42;
+
+
 /*  Type Declarations 
      - Should they only start with an upper case letter?
 */
-{} R = {string s1, number n1, boolean b1};
 // R2 = {string s1, number n1, boolean b1};
 
 /*  Instance Declarations 
@@ -13,20 +19,23 @@
 // string s1 = "Hello and Welcome!";
 // string s2 = "Hello and Welcome!";
 // s2 = "Hello and Welcome!";
-
-number _n0 = 42;
+number weewoo = "ni";
+number n9 = 11 ;
 number n1 = 0.2;
+number n1 = 2;
 number[] n2 = 42.2;
 number n3a = [1, 2, 3, 4]; 
 number[] n3b = [1, 2, 3, 4];
 n4 = 42;
+number n9 = 11;
+string xx = 23; 
 
 boolean b1 = true;
 boolean b2 = false;
 b3 = true;
 
-{string s1, number n1, boolean b1} r = {"aaa", 1, true};
-R r = {"aaa", 1, true};
+{string s1, number n1, boolean b1, string s2} r = {"aaa", 1, true, "aa"};
+
 
 //  Datasets  ---
 {string s1, number n1, boolean b1}[] d1 = [{"aaa", 1, true}, {"bbb", 2, false}, {"ddd", 2, false}];

@@ -92,38 +92,46 @@ class HoshieParser extends CstParser {
         $.RULE("declType", () => {
             $.OR([
                 { ALT: () => $.SUBRULE($.structure) },
-                { ALT: () => $.CONSUME(lex.PrimativeType) },
+                { ALT: () => $.SUBRULE($.primativeType) },
                 { ALT: () => $.CONSUME(lex.TypeID) }
             ]);
         });
+
+        $.RULE("primativeType", () => {
+            $.OR([
+                { ALT: () => $.CONSUME(lex.Boolean) },
+                { ALT: () => $.CONSUME(lex.Number) },
+                { ALT: () => $.CONSUME(lex.String) }
+            ])
+        })
         //#endregion 
 
         //#region Constants  ---
-        $.RULE("constantExpression", () => {
+        $.RULE("constant", () => {
             $.OR([
-                { ALT: () => $.SUBRULE($.constantArray) },
-                { ALT: () => $.SUBRULE($.constant) },
+                { ALT: () => $.SUBRULE($.array) },
+                { ALT: () => $.SUBRULE($.row) },
+                { ALT: () => $.SUBRULE($.primativeTypeInstance) },
             ]);
         });
 
-        $.RULE("constantArray", () => {
+        $.RULE("primativeTypeInstance", () => {
+            $.OR([
+                { ALT: () => $.CONSUME(lex.StringInstance) },
+                { ALT: () => $.CONSUME(lex.NumberInstance) },
+                { ALT: () => $.CONSUME(lex.BooleanInstance) }
+            ]);
+        });
+
+        $.RULE("array", () => {
             $.CONSUME(lex.LSquare);
             $.MANY_SEP({
                 SEP: lex.Comma,
                 DEF: () => {
-                    $.SUBRULE($.constant);
+                    $.SUBRULE($.expression);
                 }
             });
             $.CONSUME(lex.RSquare);
-        });
-
-        $.RULE("constant", () => {
-            $.OR([
-                { ALT: () => $.SUBRULE($.row) },
-                { ALT: () => $.CONSUME(lex.String) },
-                { ALT: () => $.CONSUME(lex.Number) },
-                { ALT: () => $.CONSUME(lex.Boolean) }
-            ]);
         });
 
         $.RULE("row", () => {
@@ -131,7 +139,7 @@ class HoshieParser extends CstParser {
             $.MANY_SEP({
                 SEP: lex.Comma,
                 DEF: () => {
-                    $.SUBRULE($.constant);
+                    $.SUBRULE($.expression);
                 }
             });
             $.CONSUME(lex.RCurley);
@@ -141,7 +149,7 @@ class HoshieParser extends CstParser {
         //#region Expressions  ---
         $.RULE("expression", () => {
             $.OR([
-                { ALT: () => $.SUBRULE($.constantExpression) },
+                { ALT: () => $.SUBRULE($.constant) },
             ]);
         });
         //#endregion

@@ -15,18 +15,21 @@ export const CommentMulti = createTok({ name: "CommentMulti", pattern: /\/[*][\s
 export const CommentSingle = createTok({ name: "CommentSingle", pattern: /(\/\/.*)/ });
 
 //  Constants ---
-export const Boolean = createTok({ name: "Boolean", pattern: /(true|false)/ });
-export const String = createTok({ name: "String", pattern: /("([^"\\]*(?:\\.[^"\\]*)*)")/ });
-export const Number = createTok({ name: "Number", pattern: /\b(\d+(\.\d+)?)\b/ });
+export const BooleanInstance = createTok({ name: "BooleanInstance", pattern: /(true|false)/ });
+export const StringInstance = createTok({ name: "StringInstance", pattern: /("([^"\\]*(?:\\.[^"\\]*)*)")/ });
+export const NumberInstance = createTok({ name: "NumberInstance", pattern: /\b(\d+(\.\d+)?)\b/ });
 
 //  Types ---
-export const PrimativeType = createTok({ name: "PrimativeType", pattern: /\b(boolean|string|number)\b/ });
+export const Boolean = createTok({ name: "Boolean", pattern: /\bboolean\b/ });
+export const String = createTok({ name: "String", pattern: /\bstring\b/ });
+export const Number = createTok({ name: "Number", pattern: /\bnumber\b/ });
+
 export const StructureType = createTok({ name: "StructureType", pattern: /\{}/ });
 export const ArrayType = createTok({ name: "ArrayType", pattern: /\[]/ });
 // export const DatasetType = createTok({ name: "DatasetType", group: "entity.name.type", pattern: /\[]/ });
 
 //  ID  ---
-export const TypeID = createTok({ name: "ID", pattern: /[A-Z]\w*/ });
+export const TypeID = createTok({ name: "TypeID", pattern: /[A-Z]\w*/ });
 export const ID = createTok({ name: "ID", pattern: /[_a-z]\w*/ });
 
 //  Special Chars  ---
