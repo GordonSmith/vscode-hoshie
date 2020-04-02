@@ -30,7 +30,7 @@ class HoshieParser extends CstParser {
             $.MANY(() => {
                 $.OR([
                     { ALT: () => $.SUBRULE($.comment) },
-                    { ALT: () => $.SUBRULE($.statement) },
+                    { ALT: () => $.SUBRULE($.statement) }
                 ]);
             });
         });
@@ -45,7 +45,7 @@ class HoshieParser extends CstParser {
         $.RULE("statement", () => {
             $.OR([
                 { ALT: () => $.SUBRULE($.assignment) },
-                { ALT: () => $.SUBRULE($.typeDefinition) },
+                { ALT: () => $.SUBRULE($.typeDefinition) }
             ]);
             $.CONSUME(lex.SemiColon);
         });
@@ -59,7 +59,7 @@ class HoshieParser extends CstParser {
         //#region Type Definitions  ---
         $.RULE("typeDefinition", () => {
             $.OR([
-                { ALT: () => $.SUBRULE($.structureType) },
+                { ALT: () => $.SUBRULE($.structureType) }
             ]);
         });
 
@@ -104,14 +104,14 @@ class HoshieParser extends CstParser {
                 { ALT: () => $.CONSUME(lex.String) }
             ])
         })
-        //#endregion 
+        //#endregion
 
         //#region Constants  ---
         $.RULE("constant", () => {
             $.OR([
                 { ALT: () => $.SUBRULE($.array) },
                 { ALT: () => $.SUBRULE($.row) },
-                { ALT: () => $.SUBRULE($.primativeTypeInstance) },
+                { ALT: () => $.SUBRULE($.primativeTypeInstance) }
             ]);
         });
 
@@ -149,7 +149,7 @@ class HoshieParser extends CstParser {
         //#region Expressions  ---
         $.RULE("expression", () => {
             $.OR([
-                { ALT: () => $.SUBRULE($.constant) },
+                { ALT: () => $.SUBRULE($.constant) }
             ]);
         });
         //#endregion

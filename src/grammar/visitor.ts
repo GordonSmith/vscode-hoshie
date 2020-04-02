@@ -63,7 +63,7 @@ export class HoshieVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     program(ctx, param) {
         return {
             type: "program",
-            statements: this.walkMany<statement>(ctx.statement),
+            statements: this.walkMany<statement>(ctx.statement)
         };
     }
 

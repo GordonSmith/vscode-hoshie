@@ -1,7 +1,6 @@
 import { CstNode, TokenType } from "chevrotain";
 import { hoshieParser } from "./parser";
 
-
 export interface SyntaxError {
     error: { message: string };
     token: TokenType;
@@ -24,11 +23,13 @@ interface IPrimativeType {
 interface IPrimativeTypeInstance extends IPrimativeType {
     codeGen: CodeGenFunc;
 }
+
 interface IConstant {
     type: TypeFunc;
     typeOf: TypeOfFunc;
     codeGen: CodeGenFunc;
 }
+
 interface IExpression extends IConstant {
     codeGen: CodeGenFunc;
 }
@@ -36,6 +37,7 @@ interface IExpression extends IConstant {
 interface IRow extends IConstant {
     codeGen: CodeGenFunc;
 }
+
 interface IArray extends IConstant {
     codeGen: CodeGenFunc;
 }
@@ -45,21 +47,22 @@ interface IAssign {
     typeOf: TypeFunc;
 }
 
-interface IArrayEqual {
-    (input: Array<any>): string
-}
+type IArrayEqual = (input: any[]) => string
+
 interface IDeclType {
     name;
     type: TypeFunc;
     typeOf: TypeOfFunc;
     codeGen: CodeGenFunc;
 }
+
 interface IDeclaration extends IDeclType {
     codeGen: CodeGenFunc;
 
     isArray: boolean;
     id: string;
 }
+
 interface IStructure {
     fields: { [key: string]: IDeclaration };
     type();
@@ -67,8 +70,6 @@ interface IStructure {
 }
 
 interface IConstantExpresion extends IExpression { }
-
-
 
 export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWithDefaults() {
 
@@ -86,8 +87,6 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         super();
         this.validateVisitor();
     }
-
-
 
     program(ctx, param) {
         const programGlobalVariables: { [key: string]: IDeclaration } = {};
@@ -109,7 +108,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         const assign = this.token(ctx.assign);
         const structure = this.visit(ctx.structure, param)
         const retVal = {
-            ...structure,
+            ...structure
         }
         param.scope[typeID2.image] = retVal
 
@@ -128,8 +127,8 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         const b = expression.typeOf();
         const a1 = declaration.type();
         const b1 = expression.type();
-        var codeGenString;
-        var test;
+        let codeGenString;
+        let test;
         if (declaration.type() === "structure" && expression.type() === "row") {
             if (!this.arrayCheck(declaration, expression)) {
                 this.errors.push({
@@ -140,7 +139,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 })
             }
         }
-        else if (assign && declaration && expression && (declaration.typeOf() !== expression.typeOf() || (declaration.isArray == true && expression.typeOf() !== "array"))) {
+        else if (assign && declaration && expression && (declaration.typeOf() !== expression.typeOf() || (declaration.isArray === true && expression.typeOf() !== "array"))) {
             this.errors.push({
                 error: {
                     message: "Mismatched Array []"
@@ -158,7 +157,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         }
         else {
             codeGenString = this.generateAssignmentCode(expression, declaration)
-            if (declaration.typeOf() == "structure") {
+            if (declaration.typeOf() === "structure") {
                 test = `${declaration.codeGen()} = {${codeGenString}}`
             }
             else {
@@ -169,7 +168,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
 
         return {
             codeGen() {
-                if (declaration.typeOf() == "structure") {
+                if (declaration.typeOf() === "structure") {
                     return `${declaration.codeGen()} = {${codeGenString}}`
                 }
                 else {
@@ -178,7 +177,6 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             }
         }
     }
-
 
     arrayCheck(LArray, RArray) {
         if (LArray.length !== RArray.length) {
@@ -195,8 +193,6 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         }
         return true
     }
-
-
 
     declaration(ctx, param): IDeclaration {
         const declType: IDeclType = this.visit(ctx.declType, param);
@@ -222,7 +218,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         const retVal = {
             visitedType: "IDeclaration",
             ...declType,
-            id,// short hand for id:id,
+            id, // short hand for id:id,
             isArray: !!ctx.ArrayType,
             codeGen() {
                 const TypeAsString = this.typeOf()
@@ -290,7 +286,6 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         }
     }
 
-
     structure(ctx, param): IStructure {
         const newParam: { [key: string]: IDeclaration } = {};
         const declarations = ctx.declaration?.map((d: CstNode | CstNode[]) => this.visit(d, { scope: newParam }));
@@ -302,7 +297,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 return declarations?.map(d => d.type())
             },
             codeGen() {
-                return '';
+                return "";
             }
         };
     }
@@ -400,20 +395,18 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             },
             codeGen() {
                 const a = JSON.stringify(expressions?.map(c => c.codeGen()));
-                return a; // Unsure if in correct place 
+                return a; // Unsure if in correct place
             }
         }
     }
 
-
-
-    allEqual(array: Array<any>) {
-        if (array.length == 0) {
+    allEqual(array: any[]) {
+        if (array.length === 0) {
             return { result: false }
         }
-        var previous = array[0]
+        let previous = array[0]
         array.forEach(element => {
-            if (previous != element) {
+            if (previous !== element) {
                 return { result: false }
             }
             previous = element;
@@ -426,15 +419,15 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     }
 
     generateAssignmentCode(expression, declaration) {
-        var retVal;
-        if (declaration.typeOf() == "structure") {
+        let retVal;
+        if (declaration.typeOf() === "structure") {
             const values = expression.type();
             const declarations = declaration.type();
-            var attributesString = String();
+            let attributesString = String();
             for (let i = 0; i < values.length - 1; i++) {
-                let decType = declarations[i]
-                let value = values[i]
-                if (decType == "structure") {
+                const decType = declarations[i]
+                const value = values[i]
+                if (decType === "structure") {
                     this.generateAssignmentCode(decType, value);
                 }
                 attributesString += `${declaration[i].id.image}: ${declarations[i].replace(/^\w/, c => c.toUpperCase())}: ${values[i]}, \n`

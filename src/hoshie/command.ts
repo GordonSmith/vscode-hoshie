@@ -17,6 +17,6 @@ export class Commands {
     }
 
     helloWorld() {
-        vscode.window.showInformationMessage('Woof!');
+        vscode.window.showInformationMessage("Woof!");
     }
 }
