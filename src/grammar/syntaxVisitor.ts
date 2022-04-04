@@ -7,7 +7,7 @@ export interface SyntaxError {
     token: TokenType;
 }
 
-type CodeGenFunc = () => string
+type CodeGenFunc = () => string;
 type Types = "boolean" | "string" | "number" | "row" | "structure" | "typeDef";
 type TypeFunc = () => Types;
 type TypeOfFunc = () => "primativeType" | "array" | Types;
@@ -45,7 +45,7 @@ interface IAssign {
     typeOf: TypeFunc;
 }
 
-type IArrayEqual = (input: any[]) => string
+type IArrayEqual = (input: any[]) => string;
 
 interface IDeclType {
     name;
@@ -74,9 +74,9 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     globalVariables: { [key: string]: IDeclaration } = {};
 
     protected token(ctx) {
-        if (ctx === undefined) return undefined;
+        if (ctx === undefined) { return undefined; };
         const node = Array.isArray(ctx) ? ctx[0] : ctx;
-        if (!node) throw new Error("Invalid token");
+        if (!node) { throw new Error("Invalid token"); };
         return node;
     }
 
@@ -92,22 +92,22 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
 
     statement(ctx, param) {
         const assignment = this.visit(ctx.assignment, param);
-        const typeDefinition = this.visit(ctx.typeDefinition, param)
+        const typeDefinition = this.visit(ctx.typeDefinition, param);
     }
 
     typeDefinition(ctx, param) {
-        const structType = this.visit(ctx.structureType, param)
+        const structType = this.visit(ctx.structureType, param);
     }
 
     structureType(ctx, param) {
         const typeID = this.typeIDLex(ctx.TypeID, param);
         const typeID2 = this.token(ctx.TypeID);
         const assign = this.token(ctx.assign);
-        const structure = this.visit(ctx.structure, param)
+        const structure = this.visit(ctx.structure, param);
         const retVal = {
             ...structure
-        }
-        param.scope[typeID2.image] = retVal
+        };
+        param.scope[typeID2.image] = retVal;
 
     }
 
@@ -133,7 +133,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                         message: "structure does not match assigned value "
                     },
                     token: assign
-                })
+                });
             }
         }
         else if (assign && declaration && expression && ((!declaration.isArray && declaration.typeOf() !== expression.typeOf()) || (declaration.isArray === true && expression.typeOf() !== dataTypes.array))) {
@@ -154,41 +154,41 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             });
         }
         else {
-            codeGenString = this.generateAssignmentCode(expression, declaration)
+            codeGenString = this.generateAssignmentCode(expression, declaration);
             if (declaration.typeOf() === "structure") {
-                test = `${declaration.codeGen()} = {${codeGenString}}`
+                test = `${declaration.codeGen()} = {${codeGenString}}`;
             }
             else {
-                test = `${declaration.codeGen()} = ${codeGenString}`
+                test = `${declaration.codeGen()} = ${codeGenString}`;
             }
         }
 
         return {
             codeGen() {
                 if (declaration.typeOf() === "structure") {
-                    return `${declaration.codeGen()} = {${codeGenString}}`
+                    return `${declaration.codeGen()} = {${codeGenString}}`;
                 }
                 else {
-                    return `${declaration.codeGen()} = ${codeGenString}`
+                    return `${declaration.codeGen()} = ${codeGenString}`;
                 }
             }
-        }
+        };
     }
 
     arrayCheck(LArray, RArray) {
         if (LArray.length !== RArray.length) {
-            return false
+            return false;
         }
         for (let index = 0; index < LArray.length; index++) {
             if (LArray[index] !== RArray[index]) {
                 if (Array.isArray(LArray[index]) && Array.isArray(RArray[index])) {
-                    return this.arrayCheck(LArray[index], RArray[index])
+                    return this.arrayCheck(LArray[index], RArray[index]);
                 } else {
-                    return false
+                    return false;
                 }
             }
         }
-        return true
+        return true;
     }
 
     declaration(ctx, param): IDeclaration {
@@ -200,7 +200,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                     message: "No ID for declaration"
                 },
                 token: declType
-            })
+            });
         }
         const scope = param?.scope;
         if (scope[id.image]) {
@@ -218,15 +218,15 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             id, // short hand for id:id,
             isArray: !!ctx.ArrayType,
             codeGen() {
-                const TypeAsString = this.typeOf()
+                const TypeAsString = this.typeOf();
                 if (TypeAsString === "primativeType") {
-                    return `const ${id.image}: ${this.type().replace(/^\w/, c => c.toUpperCase())}${this.isArray ? "[]" : ""}`
+                    return `const ${id.image}: ${this.type().replace(/^\w/, c => c.toUpperCase())}${this.isArray ? "[]" : ""}`;
                 }
                 else {
-                    return `const ${id.image}`
+                    return `const ${id.image}`;
                 }
             }
-        }
+        };
         scope[id.image] = retVal;
         return retVal;
     }
@@ -234,7 +234,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     declType(ctx, param): IDeclType {
         const structure = this.visit(ctx.structure, param);
         const primativeType = this.visit(ctx.primativeType, param);
-        const typeIdR = this.typeIDLex(ctx, param)
+        const typeIdR = this.typeIDLex(ctx, param);
         return {
             ...structure,
             ...primativeType,
@@ -243,9 +243,9 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     }
 
     typeIDLex(ctx, param) {
-        const typeID = this.token(ctx.TypeID)
+        const typeID = this.token(ctx.TypeID);
         if (!!!typeID) {
-            return undefined
+            return undefined;
         }
         return {
             type() {
@@ -254,33 +254,33 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             typeOf() {
                 return param.scope[typeID.image].typeOf();
             },
-        }
+        };
     }
 
     primativeType(ctx, param): IPrimativeType {
-        const Boolean = this.token(ctx.Boolean)
-        const Number = this.token(ctx.Number)
-        const String = this.token(ctx.String)
-        let bool = true
-        let retVal
+        const Boolean = this.token(ctx.Boolean);
+        const Number = this.token(ctx.Number);
+        const String = this.token(ctx.String);
+        let bool = true;
+        let retVal;
         if (Boolean) {
-            retVal = "boolean"
+            retVal = "boolean";
         } else if (Number) {
-            retVal = "number"
+            retVal = "number";
         } else if (String) {
-            retVal = "string"
+            retVal = "string";
         } else {
-            bool = false
-            retVal = "boolean"
+            bool = false;
+            retVal = "boolean";
         }
         return {
             type() {
-                return retVal
+                return retVal;
             },
             typeOf() {
-                return "primativeType"
+                return "primativeType";
             }
-        }
+        };
     }
 
     structure(ctx, param): IStructure {
@@ -289,9 +289,9 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
         return {
             visitedType: "IStructure",
             ...declarations,
-            typeOf() { return "structure" },
+            typeOf() { return "structure"; },
             type() {
-                return declarations?.map(d => d.type())
+                return declarations?.map(d => d.type());
             },
             codeGen() {
                 return "";
@@ -319,51 +319,51 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             ...array,
             ...primativeTypeInstance,
             codeGen() {
-                return (row || array || primativeTypeInstance).codeGen()
+                return (row || array || primativeTypeInstance).codeGen();
             }
         };
     }
 
     primativeTypeInstance(ctx, param): IPrimativeTypeInstance {
-        const BooleanInstance = this.token(ctx.BooleanInstance)
-        const NumberInstance = this.token(ctx.NumberInstance)
-        const StringInstance = this.token(ctx.StringInstance)
-        const TypeAsString = (BooleanInstance || NumberInstance || StringInstance).image
-        let retVal
+        const BooleanInstance = this.token(ctx.BooleanInstance);
+        const NumberInstance = this.token(ctx.NumberInstance);
+        const StringInstance = this.token(ctx.StringInstance);
+        const TypeAsString = (BooleanInstance || NumberInstance || StringInstance).image;
+        let retVal;
         if (BooleanInstance) {
-            retVal = "boolean"
+            retVal = "boolean";
         } else if (NumberInstance) {
-            retVal = "number"
+            retVal = "number";
         } else if (StringInstance) {
-            retVal = "string"
+            retVal = "string";
         } else {
-            retVal = "boolean"
+            retVal = "boolean";
         }
         return {
             typeOf() {
-                return "primativeType"
+                return "primativeType";
             },
             type() {
-                return retVal
+                return retVal;
             },
             codeGen() {
-                return TypeAsString
+                return TypeAsString;
             }
-        }
+        };
 
     }
 
     row(ctx, param): IRow {
-        const expresions = ctx.expression?.map((e: CstNode | CstNode[]) => this.visit(e, param))
+        const expresions = ctx.expression?.map((e: CstNode | CstNode[]) => this.visit(e, param));
         return {
             typeOf() {
-                return "structure" // Rename from row to structure
+                return "structure"; // Rename from row to structure
             },
             type() {
-                return expresions?.map((e: IExpression) => e.type())
+                return expresions?.map((e: IExpression) => e.type());
             },
             codeGen() {
-                return "row code"
+                return "row code";
             }
         };
     }
@@ -385,33 +385,33 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
 
         return {
             typeOf() {
-                return "array"
+                return "array";
             },
             type() {
-                return expressions?.map((e: IExpression) => e.type())
+                return expressions?.map((e: IExpression) => e.type());
             },
             codeGen() {
                 const a = JSON.stringify(expressions?.map(c => c.codeGen()));
                 return a; // Unsure if in correct place
             }
-        }
+        };
     }
 
     allEqual(array: any[]) {
         if (array.length === 0) {
-            return { result: false }
+            return { result: false };
         }
-        let previous = array[0]
+        let previous = array[0];
         array.forEach(element => {
             if (previous !== element) {
-                return { result: false }
+                return { result: false };
             }
             previous = element;
         });
         return {
             result: true,
             lastElType: previous
-        }
+        };
 
     }
 
@@ -422,19 +422,19 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             const declarations = declaration.type();
             let attributesString = String();
             for (let i = 0; i < values.length - 1; i++) {
-                const decType = declarations[i]
-                const value = values[i]
+                const decType = declarations[i];
+                const value = values[i];
                 if (decType === "structure") {
                     this.generateAssignmentCode(decType, value);
                 }
-                attributesString += `${declaration[i]?.id?.image}: ${declarations[i]?.replace(/^\w/, c => c.toUpperCase())}: ${values[i]}, \n`
+                attributesString += `${declaration[i]?.id?.image}: ${declarations[i]?.replace(/^\w/, c => c.toUpperCase())}: ${values[i]}, \n`;
             }
-            attributesString += `${declaration[values.length - 1]?.id?.image}: ${declarations[values.length - 1]?.replace(/^\w/, c => c.toUpperCase())}: ${values[values.length - 1]}\n`
-            retVal = `${attributesString}`
+            attributesString += `${declaration[values.length - 1]?.id?.image}: ${declarations[values.length - 1]?.replace(/^\w/, c => c.toUpperCase())}: ${values[values.length - 1]}\n`;
+            retVal = `${attributesString}`;
         }
         else {
-            retVal = expression.codeGen()
+            retVal = expression.codeGen();
         }
-        return retVal
+        return retVal;
     }
 }

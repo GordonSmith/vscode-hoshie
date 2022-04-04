@@ -25,9 +25,9 @@ export class HoshieVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
 
     protected walk<T>(cstNode: CstNode | CstNode[], param?): T | undefined {
         const node = Array.isArray(cstNode) ? cstNode[0] : cstNode;
-        if (node === undefined) return undefined;
+        if (node === undefined) { return undefined; }
         const retVal = this.visit.call(this, cstNode, param);
-        if (retVal === undefined) return undefined;
+        if (retVal === undefined) { return undefined; }
         retVal.recoveredNode = retVal.recoveredNode || node.recoveredNode;
         retVal.range = loc2Range(node.location);
         retVal.errors = node["errors"] || [];
@@ -35,7 +35,7 @@ export class HoshieVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     }
 
     protected walkMany<T extends Node>(items: CstNode[]): T[] {
-        if (items === undefined) return [];
+        if (items === undefined) { return []; }
         return items.map(item => this.walk<T>(item)).filter(item => !!item) as T[];
     }
 
@@ -45,14 +45,14 @@ export class HoshieVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
     }
 
     protected tokenMap(ctx) {
-        if (ctx === undefined) return undefined;
+        if (ctx === undefined) { return undefined; }
         return ctx.map(item => this.token(item));
     }
 
     protected token(ctx) {
-        if (ctx === undefined) return undefined;
+        if (ctx === undefined) { return undefined; }
         const node = Array.isArray(ctx) ? ctx[0] : ctx;
-        if (!node) throw new Error("Invalid token");
+        if (!node) { throw new Error("Invalid token"); }
         return {
             type: node.tokenType.name,
             image: node.image,

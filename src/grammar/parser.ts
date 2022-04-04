@@ -102,8 +102,8 @@ class HoshieParser extends CstParser {
                 { ALT: () => $.CONSUME(lex.Boolean) },
                 { ALT: () => $.CONSUME(lex.Number) },
                 { ALT: () => $.CONSUME(lex.String) }
-            ])
-        })
+            ]);
+        });
         //#endregion
 
         //#region Constants  ---
