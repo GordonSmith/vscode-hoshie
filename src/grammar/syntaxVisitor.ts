@@ -1,5 +1,6 @@
 import { CstNode, TokenType } from "chevrotain";
 import { hoshieParser } from "./parser";
+import { dataTypes } from '../constants/types';
 
 export interface SyntaxError {
     error: { message: string };
@@ -429,9 +430,9 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 if (decType === "structure") {
                     this.generateAssignmentCode(decType, value);
                 }
-                attributesString += `${declaration[i].id.image}: ${declarations[i].replace(/^\w/, c => c.toUpperCase())}: ${values[i]}, \n`
+                attributesString += `${declaration[i]?.id?.image}: ${declarations[i]?.replace(/^\w/, c => c.toUpperCase())}: ${values[i]}, \n`
             }
-            attributesString += `${declaration[values.length - 1].id.image}: ${declarations[values.length - 1].replace(/^\w/, c => c.toUpperCase())}: ${values[values.length - 1]}\n`
+            attributesString += `${declaration[values.length - 1]?.id?.image}: ${declarations[values.length - 1]?.replace(/^\w/, c => c.toUpperCase())}: ${values[values.length - 1]}\n`
             retVal = `${attributesString}`
         }
         else {
