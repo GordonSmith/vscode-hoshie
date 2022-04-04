@@ -58,7 +58,6 @@ interface IDeclType {
 
 interface IDeclaration extends IDeclType {
     codeGen: CodeGenFunc;
-
     isArray: boolean;
     id: string;
 }
@@ -163,7 +162,6 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
             else {
                 test = `${declaration.codeGen()} = ${codeGenString}`
             }
-            console.log(test);
         }
 
         return {
@@ -247,16 +245,16 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
 
     typeIDLex(ctx, param) {
         const typeID = this.token(ctx.TypeID)
-
         if (!!!typeID) {
             return undefined
         }
         return {
             type() {
                 return param.scope[typeID.image].type();
-            }, typeOf() {
+            },
+            typeOf() {
                 return param.scope[typeID.image].typeOf();
-            }
+            },
         }
     }
 
