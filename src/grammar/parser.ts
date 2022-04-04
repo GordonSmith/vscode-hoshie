@@ -149,7 +149,7 @@ class HoshieParser extends CstParser {
         //#region Expressions  ---
         $.RULE("expression", () => {
             $.OR([
-                { ALT: () => $.SUBRULE($.constant) }
+                { ALT: () => $.SUBRULE($.constant) },
             ]);
         });
         //#endregion

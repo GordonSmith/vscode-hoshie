@@ -25,6 +25,8 @@ export const String = createTok({ name: "String", pattern: /\bstring\b/ });
 export const Number = createTok({ name: "Number", pattern: /\bnumber\b/ });
 
 export const StructureType = createTok({ name: "StructureType", pattern: /\{}/ });
+// suggest name change of ArrayType to TypeArray. an instance of TypeArray would then be a ArrayType
+
 export const ArrayType = createTok({ name: "ArrayType", pattern: /\[]/ });
 // export const DatasetType = createTok({ name: "DatasetType", group: "entity.name.type", pattern: /\[]/ });
 

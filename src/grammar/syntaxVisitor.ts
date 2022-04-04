@@ -24,13 +24,11 @@ interface IPrimativeType {
 interface IPrimativeTypeInstance extends IPrimativeType {
     codeGen: CodeGenFunc;
 }
-
 interface IConstant {
     type: TypeFunc;
     typeOf: TypeOfFunc;
     codeGen: CodeGenFunc;
 }
-
 interface IExpression extends IConstant {
     codeGen: CodeGenFunc;
 }
@@ -38,7 +36,6 @@ interface IExpression extends IConstant {
 interface IRow extends IConstant {
     codeGen: CodeGenFunc;
 }
-
 interface IArray extends IConstant {
     codeGen: CodeGenFunc;
 }
