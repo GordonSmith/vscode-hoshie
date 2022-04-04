@@ -138,7 +138,7 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 })
             }
         }
-        else if (assign && declaration && expression && (declaration.typeOf() !== expression.typeOf() || (declaration.isArray === true && expression.typeOf() !== "array"))) {
+        else if (assign && declaration && expression && ((!declaration.isArray && declaration.typeOf() !== expression.typeOf()) || (declaration.isArray === true && expression.typeOf() !== dataTypes.array))) {
             this.errors.push({
                 error: {
                     message: "Mismatched Array []"
@@ -146,10 +146,11 @@ export class SyntaxVisitor extends hoshieParser.getBaseCstVisitorConstructorWith
                 token: assign
             });
         }
-        else if (assign && declaration && expression && (declaration.type() !== expression.type())) {
+        else if (assign && declaration && expression && (declaration.isArray && ![...expression.type()].every((el) => (el === declaration.type()))) && (declaration.type() !== expression.type())) {
+            const errorVal = `Value${declaration.isArray ? 's' : ''}`;
             this.errors.push({
                 error: {
-                    message: `Value not of type ${declaration.type()} `
+                    message: `${errorVal} not of type ${declaration.type()} `
                 },
                 token: assign
             });
